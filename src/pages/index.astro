@@ -4,11 +4,15 @@ import GameCard from '../components/GameCard.astro';
 import PageHero from '../components/PageHero.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { getDatabase } from '../lib/db';
-import { getAllGames } from '../lib/games';
+import GameFilters from '../components/GameFilters.astro';
+import { getAllCategories, getAllGames, getAllPublishers } from '../lib/games';
 
 export const prerender = true;
 
-const games = await getAllGames(getDatabase());
+const db = getDatabase();
+const games = await getAllGames(db);
+const categories = await getAllCategories(db);
+const publishers = await getAllPublishers(db);
 ---
 
 <Layout title="Tailspin Toys - Crowdfunding your new favorite game!">
@@ -24,10 +28,61 @@ const games = await getAllGames(getDatabase());
       {games.length === 0 ? (
         <EmptyState text="No games available at the moment." />
       ) : (
+        <GameFilters categories={categories} publishers={publishers} />
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="games-grid">
           {games.map((game) => <GameCard game={game} />)}
+        </div>
+        <div class="hidden" data-testid="no-results">
+          <EmptyState text="No games match the selected filters." />
         </div>
       )}
     </div>
   </div>
 </Layout>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-testid="game-filters"]');
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="game-card"]'));
+  const noResults = document.querySelector<HTMLElement>('[data-testid="no-results"]');
+  const count = document.querySelector<HTMLElement>('[data-testid="filter-count"]');
+
+  if (form) {
+    const checkboxes = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="category"]'));
+    const select = form.querySelector<HTMLSelectElement>('select[name="publisher"]')!;
+
+    /**
+     * Shows only the cards matching the selected filters, then updates the
+     * result count, empty state and URL query string.
+     */
+    const apply = (): void => {
+      const cats = checkboxes.filter((c) => c.checked).map((c) => c.value);
+      const pub = select.value;
+      let visible = 0;
+      for (const card of cards) {
+        const show =
+          (cats.length === 0 || cats.includes(card.dataset.categoryId ?? '')) &&
+          (pub === '' || card.dataset.publisherId === pub);
+        card.classList.toggle('hidden', !show);
+        if (show) visible++;
+      }
+      noResults?.classList.toggle('hidden', visible > 0);
+      if (count) count.textContent = `Showing ${visible} of ${cards.length} games`;
+
+      const params = new URLSearchParams();
+      cats.forEach((c) => params.append('category', c));
+      if (pub) params.set('publisher', pub);
+      const query = params.toString();
+      history.replaceState(null, '', query ? `?${query}` : location.pathname);
+    };
+
+    const params = new URLSearchParams(location.search);
+    const initialCats = params.getAll('category');
+    checkboxes.forEach((c) => (c.checked = initialCats.includes(c.value)));
+    select.value = params.get('publisher') ?? '';
+
+    form.addEventListener('change', apply);
+    form.addEventListener('reset', () => setTimeout(apply));
+    form.addEventListener('submit', (e) => e.preventDefault());
+    apply();
+  }
+</script>

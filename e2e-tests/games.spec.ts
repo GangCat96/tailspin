@@ -134,3 +134,55 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 });
+
+test.describe('Game filtering', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('games-grid')).toBeVisible();
+  });
+
+  test('filters by category, including multiple categories', async ({ page }) => {
+    const cards = page.locator('[data-testid="game-card"]:visible');
+    const total = await cards.count();
+    const checkboxes = page.locator('[data-testid^="category-filter-"]');
+
+    await checkboxes.first().check();
+    const first = await cards.count();
+    expect(first).toBeGreaterThan(0);
+    expect(first).toBeLessThan(total);
+    await expect(cards.getByTestId('game-category').first()).toHaveText(
+      (await checkboxes.first().evaluate((el) => el.parentElement?.textContent?.trim())) ?? '',
+    );
+
+    await checkboxes.nth(1).check();
+    expect(await cards.count()).toBeGreaterThan(first);
+  });
+
+  test('filters by publisher and combines with category, then clears', async ({ page }) => {
+    const cards = page.locator('[data-testid="game-card"]:visible');
+    const total = await cards.count();
+
+    await page.getByTestId('publisher-filter').selectOption({ index: 1 });
+    const byPublisher = await cards.count();
+    expect(byPublisher).toBeGreaterThan(0);
+    expect(byPublisher).toBeLessThan(total);
+
+    await page.locator('[data-testid^="category-filter-"]').first().check();
+    expect(await cards.count()).toBeLessThanOrEqual(byPublisher);
+
+    await page.getByTestId('clear-filters').click();
+    await expect(cards).toHaveCount(total);
+  });
+
+  test('filter controls are keyboard accessible and announce results', async ({ page }) => {
+    const checkbox = page.locator('[data-testid^="category-filter-"]').first();
+    await checkbox.focus();
+    await page.keyboard.press('Space');
+    await expect(checkbox).toBeChecked();
+    await expect(page.getByTestId('filter-count')).toContainText('Showing');
+    await expect(page.getByTestId('no-results')).toBeHidden();
+
+    await page.getByTestId('publisher-filter').focus();
+    await expect(page.getByTestId('publisher-filter')).toBeFocused();
+  });
+});

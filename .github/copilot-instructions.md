@@ -36,6 +36,7 @@ This is a crowdfunding platform for games with a developer theme. The applicatio
 
 - Use TypeScript with explicit types for function parameters and return values, especially in the data layer (`db/`, `src/lib/`)
 - Frontend code (TypeScript, Astro) must pass ESLint checks (`npm run lint`)
+- 새 TypeScript 코드에는 문서화를 위한 TSDoc 주석을 작성합니다.
 
 ### Data Layer Patterns (Drizzle + Node SQLite)
 
@@ -91,7 +92,7 @@ The application lives at the repository root:
 
 - `db/`: Drizzle schema, migrations, transforms, seed, and `games.csv`
 - `src/lib/`: Node SQLite client (`db.ts`) and data-access helpers (`games.ts`)
-- `src/components/`: reusable `.astro` components
+- `src/components/`: reusable `.astro` components (incl. `GameFilters.astro` for client-side category/publisher filtering on the home page)
 - `src/layouts/`: Astro layout templates
 - `src/pages/`: Astro page routes (`index.astro` listing, `game/[id].astro`, `404.astro`, `about.astro`)
 - `src/styles/`: CSS and Tailwind configuration
