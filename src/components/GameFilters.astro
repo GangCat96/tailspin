@@ -1,0 +1,62 @@
+---
+import type { Category, Publisher } from '../types/game';
+
+/** Props for the game filter controls. */
+interface Props {
+    /** Categories offered as checkboxes. */
+    categories: Category[];
+    /** Publishers offered in the select. */
+    publishers: Publisher[];
+}
+
+const { categories, publishers } = Astro.props;
+const focus = 'focus:ring-2 focus:ring-blue-500 focus:outline-none';
+---
+
+<form
+    data-testid="game-filters"
+    aria-label="Filter games"
+    class="mb-8 p-4 bg-slate-800/60 rounded-xl border border-slate-700/50 flex flex-col gap-4"
+>
+    <fieldset class="flex flex-wrap gap-x-4 gap-y-2" data-testid="category-filter">
+        <legend class="text-sm font-medium text-slate-300 mb-2">Categories</legend>
+        {categories.map((category) => (
+            <label class="inline-flex items-center gap-2 text-slate-200 text-sm cursor-pointer">
+                <input
+                    type="checkbox"
+                    name="category"
+                    value={category.id}
+                    data-testid={`category-filter-${category.id}`}
+                    class={`h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-600 ${focus}`}
+                />
+                {category.name}
+            </label>
+        ))}
+    </fieldset>
+
+    <div class="flex flex-wrap items-end gap-4">
+        <div class="flex flex-col gap-1">
+            <label for="publisher-filter" class="text-sm font-medium text-slate-300">Publisher</label>
+            <select
+                id="publisher-filter"
+                name="publisher"
+                data-testid="publisher-filter"
+                class={`bg-slate-700 text-slate-100 text-sm rounded-lg border border-slate-600 px-3 py-2 ${focus}`}
+            >
+                <option value="">All publishers</option>
+                {publishers.map((publisher) => (
+                    <option value={publisher.id}>{publisher.name}</option>
+                ))}
+            </select>
+        </div>
+        <button
+            type="reset"
+            data-testid="clear-filters"
+            class={`px-4 py-2 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-100 transition-colors ${focus}`}
+        >
+            Clear filters
+        </button>
+    </div>
+
+    <p class="text-sm text-slate-400" role="status" aria-live="polite" data-testid="filter-count"></p>
+</form>
