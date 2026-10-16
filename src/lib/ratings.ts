@@ -30,3 +30,11 @@ export function formatStarRating(rating: number | null): string {
 
     return '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(emptyStars);
 }
+
+/**
+ * Text label for a game card: "4.2 / 5", or "No rating yet" when unrated.
+ */
+export function formatRatingLabel(rating: number | null): string {
+    if (rating === null) return 'No rating yet';
+    return `${clampRating(rating).toFixed(1)} / 5`;
+}
